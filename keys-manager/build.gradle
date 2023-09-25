@@ -1,0 +1,127 @@
+plugins {
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id("io.micronaut.application") version "4.1.1"
+    id("io.micronaut.test-resources") version "4.1.1"
+    id("io.micronaut.aot") version "4.1.1"
+    id "io.micronaut.openapi" version "4.1.1"
+    id "org.openapi.generator" version "7.0.1"
+}
+
+version = "0.1"
+group = "es.betipo.test.keysmanager"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    // Mapper
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    annotationProcessor "org.projectlombok:lombok-mapstruct-binding:0.2.0"
+
+    // Validation
+    implementation("io.micronaut.validation:micronaut-validation")
+    annotationProcessor("io.micronaut.validation:micronaut-validation-processor")
+    annotationProcessor('io.micronaut.serde:micronaut-serde-processor')
+    annotationProcessor('io.micronaut:micronaut-http-validation')
+
+
+    implementation("io.micronaut.reactor:micronaut-reactor")
+    implementation("io.micronaut.serde:micronaut-serde-bson")
+
+    // Swagger
+    compileOnly("io.micronaut.openapi:micronaut-openapi-annotations")
+
+    implementation("io.swagger.core.v3:swagger-annotations")
+    annotationProcessor("io.swagger.core.v3:swagger-annotations")
+
+    // Persistence
+    annotationProcessor('io.micronaut.data:micronaut-data-processor')
+
+    // Lombok
+    compileOnly("org.projectlombok:lombok:1.18.26")
+    annotationProcessor('org.projectlombok:lombok:1.18.26')
+
+
+    // Database
+    implementation("io.micronaut.data:micronaut-data-r2dbc")
+    implementation("io.micronaut.r2dbc:micronaut-r2dbc-core")
+    runtimeOnly("dev.miku:r2dbc-mysql")
+
+    // Jakarta
+    implementation("jakarta.annotation:jakarta.annotation-api")
+    implementation("jakarta.validation:jakarta.validation-api")
+
+    // Logging
+    runtimeOnly("ch.qos.logback:logback-classic")
+
+    // Flyway
+    implementation("io.micronaut.flyway:micronaut-flyway")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    runtimeOnly("org.flywaydb:flyway-mysql")
+    runtimeOnly('mysql:mysql-connector-java:8.0.33')
+
+    // YAML
+    runtimeOnly("org.yaml:snakeyaml")
+
+    testImplementation("io.micronaut:micronaut-http-client")
+    testImplementation("io.micronaut.test:micronaut-test-rest-assured")
+    testImplementation("org.awaitility:awaitility:4.2.0")
+}
+
+
+application {
+    mainClass.set("es.betipo.test.keysmanager.Application")
+}
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs = [
+            '-parameters'
+    ]
+}
+
+graalvmNative.toolchainDetection = false
+
+micronaut {
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("es.betipo.test.keysmanager.*")
+    }
+    testResources {
+        additionalModules.add("r2dbc-mysql")
+    }
+    aot {
+    // Please review carefully the optimizations enabled below
+    // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+        optimizeServiceLoading = false
+        convertYamlToJava = false
+        precomputeOperations = true
+        cacheEnvironment = true
+        optimizeClassLoading = true
+        deduceEnvironment = true
+        optimizeNetty = true
+    }
+    openapi {
+        version = "5.0.1"
+        server(file("src/main/resources/apis.yaml")) {
+            apiPackageName = "es.betipo.test.keysmanager.api"
+            modelPackageName =  "es.betipo.test.keysmanager.model"
+            useReactive = true
+            useAuth = false
+        }
+    }
+}
+
+openApiGenerate {
+    generatorName.set("html2")
+    inputSpec.set("$rootDir/src/main/resources/apis.yaml")
+    outputDir.set("$buildDir/generated")
+}

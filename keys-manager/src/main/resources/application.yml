@@ -1,0 +1,39 @@
+context-path: /
+
+micronaut:
+  router:
+    static-resources:
+      swagger:
+        paths: classpath:META-INF/swagger
+        mapping: /swagger/**
+  application:
+    name: keys-manager
+  openapi:
+    views:
+      spec: swagger-ui.enabled=true, redoc.enabled=true, rapidoc.enabled=true, rapidoc.bg-color=#14191f, rapidoc.text-color=#aec2e0, rapidoc.sort-endpoints-by=method
+
+endpoints:
+  enabled=true:
+
+r2dbc:
+  datasources:
+    default:
+      db-type: mysql
+      username: root
+      password: root
+
+datasources:
+  default:
+    dialect: MYSQL
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+
+test-resources:
+  containers:
+    mysql:
+      db-name: keys_manager
+      username: root
+      password: root
